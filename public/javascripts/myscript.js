@@ -64,17 +64,30 @@ $(function () {
     });
 });
 $(document).ready(function() {
-    load_content();
+    var page =1;
+    load_content(page);
+    $(window).scroll(function(event) {
+        if($(window).scrollTop() + $(window).height() >= $(document).height() ){
+            setTimeout(function(){
+                page = page + 1;
+                load_content(page);
+            },1000);
+        }
+    });
 });
-function load_content(){
+function load_content(trang){
     $.ajax({
         url: '/trang-chu',
         type: 'GET',
         // dataType: 'html',
-        // data: {param1: 'value1'},
+        data: {page: trang},
         success : function(data){
-            $('#main-content').append(data);
-            // alert("ahihi");
+            if(data!=""){
+                $("ul.pager").show();
+                $('#main-content').append(data);
+            }else{
+                $(ul.pager).hide();
+            }
         }
     });
 }

@@ -37,8 +37,28 @@ router.get('/', function(req, res, next) {
 	// assert.equal(1,2);
 	res.render('index');
 });
-router.get('/chi-tiet', function(req, res, next) {
-	res.render('post');
+router.get('/chi-tiet/:id', function(req, res, next) {
+	var id = objectId(req.params.id);
+	// res.send(id);
+	const findDocuments = function(db, callback) {
+	  	// Get the documents collection
+	  	const collection = db.collection('post');
+	  	// Find some documents
+	  	collection.find({_id:id}).toArray(function(err, docs) {
+		  	assert.equal(err, null);
+		  	// console.log(docs);
+		  	callback(docs);
+	  	});
+	}
+	MongoClient.connect(url, function(err, client) {
+ 		assert.equal(null, err);
+ 		const db = client.db(dbName);
+ 		findDocuments(db, function(data) {
+ 			res.render('post',{data:data[0]});
+ 			// console.log(data[0]);
+ 			client.close();
+ 		});
+ 	});
 });
 
 router.get('/upload', function(req, res, next) {
@@ -75,6 +95,9 @@ router.post('/upload', function(req, res, next) {
 	 });
 
 router.get('/trang-chu',function(req,res,next){
+	var item_onPerPage = 3;
+	var page = parseInt(req.query.page) || 1;
+	var start = (page-1)*item_onPerPage;
 	function youtube_parser(url){
         var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?]*).*/;
         var match = url.match(regExp);
@@ -84,7 +107,7 @@ router.get('/trang-chu',function(req,res,next){
 	  	// Get the documents collection
 	  	const collection = db.collection('post');
 	  	// Find some documents
-	  	collection.find({}).toArray(function(err, docs) {
+	  	collection.find({}).skip(start).limit(item_onPerPage).toArray(function(err, docs) {
 	  	assert.equal(err, null);
 	  	// console.log(docs);
 	  	callback(docs);
@@ -97,7 +120,7 @@ router.get('/trang-chu',function(req,res,next){
 			var xhtml = '';
 			data.forEach(function(item){
 				xhtml+= '<h2>';
-				xhtml+= '<a href="">'+item.video+'</a>';
+				xhtml+= '<a href="/chi-tiet/'+item._id+'">'+item.video+'</a>';
 				xhtml+= '</h2>';
 				xhtml+= '<p class="lead">';
 				xhtml+= 'Đăng bởi : <a href="mailto:'+item.email+'" target="_blank">'+item.username+'</a>';
